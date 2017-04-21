@@ -1,6 +1,6 @@
 ![Endeavour Logo](http://www.endeavourhealth.org/github/logo-text-left-cropped.png)
 
-## EMIS Extract Validator
+## Emis Extract Validator
 
 A data validation tool for [EMIS Web extracts](https://www.emishealth.com/products/data-extraction-services).
 

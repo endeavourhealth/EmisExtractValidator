@@ -7,7 +7,7 @@ if (object_id('InstallExtract') is not null)
 
 go
 
-create procedure InstallExtract
+create procedure [dbo].[InstallExtract]
 as
 
 	set nocount on
@@ -100,7 +100,25 @@ as
 
 	if (@PracticeNames is not null)
 	begin
+		--DL 02/08/2017 - changed to automatically create missing practice databases rather than log the SQL and fail
 		declare @CreatePracticeCommands StringList
+		insert into @CreatePracticeCommands (String) 
+			select 'exec ConfigurePractice ' + CDB + ', ''' + OrganisationName + ''', ''' + ODSCode + ''', ''' + OrganisationGuid + ''''
+			from dbo.GetStagingOrganisations() where IsInstalled = 0 and HaveDetails = 1
+
+		while exists (select * from @CreatePracticeCommands)
+		begin
+			--declare @CreatePracticeCommand varchar(8000) = (select top 1 String from @CreatePracticeCommands)
+			set @sql = (select top 1 String from @CreatePracticeCommands)
+			;with t as (select top 1 * from @CreatePracticeCommands) delete from t
+
+			execute sp_executesql @sql
+			exec PrintMsg 'Created new practice DB:'
+			exec PrintMsg @sql
+		end
+
+
+		/*declare @CreatePracticeCommands StringList
 		insert into @CreatePracticeCommands (String) 
 			select 'exec ConfigurePractice ' + CDB + ', ''' + OrganisationName + ''', ''' + ODSCode + ''', ''' + OrganisationGuid + ''''
 			from dbo.GetStagingOrganisations() where IsInstalled = 0 and HaveDetails = 1
@@ -114,7 +132,7 @@ as
 		exec PrintMsg ''
 
 		exec ThrowError 'Please add new practices before rerunning this procedure'
-		return
+		return*/
 	end
 
 
@@ -333,4 +351,7 @@ as
 		rollback;
 		throw
 	end catch
-go
+
+GO
+
+

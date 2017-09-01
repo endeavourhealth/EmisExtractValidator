@@ -1,13 +1,15 @@
-use EMISXMaster
+USE [EMISXMaster]
+GO
 
-go
+/****** Object:  StoredProcedure [dbo].[InstallExtract]    Script Date: 01/09/2017 11:20:16 ******/
+SET ANSI_NULLS ON
+GO
 
-if (object_id('InstallExtract') is not null)
-	drop procedure InstallExtract
+SET QUOTED_IDENTIFIER OFF
+GO
 
-go
 
-create procedure [dbo].[InstallExtract]
+CREATE procedure [dbo].[InstallExtract]
 as
 
 	set nocount on
@@ -75,7 +77,7 @@ as
 	----------------------------------------------------------------------
 	-- check organisations in extract
 	----------------------------------------------------------------------
-	declare @OrganisationGuid varchar(5000)
+	/*declare @OrganisationGuid varchar(5000)
 
 	select 
 		@OrganisationGuid = isnull(@OrganisationGuid + ', ' + OrganisationGuid, OrganisationGuid)
@@ -89,6 +91,7 @@ as
 		exec ThrowError @msg
 		return
 	end
+	*/
 
 	declare @PracticeNames varchar(5000) 
 	
@@ -100,30 +103,24 @@ as
 
 	if (@PracticeNames is not null)
 	begin
-		--DL 02/08/2017 - changed to automatically create missing practice databases rather than log the SQL and fail
 		declare @CreatePracticeCommands StringList
 		insert into @CreatePracticeCommands (String) 
-			select 'exec ConfigurePractice ' + CDB + ', ''' + OrganisationName + ''', ''' + ODSCode + ''', ''' + OrganisationGuid + ''''
+			select 'exec ConfigurePractice ' + CDB + ', ''' + OrganisationName + ''', ''' + ODSCode + ''', ''' + OrganisationGuid + ''';'
 			from dbo.GetStagingOrganisations() where IsInstalled = 0 and HaveDetails = 1
 
-		while exists (select * from @CreatePracticeCommands)
-		begin
-			--declare @CreatePracticeCommand varchar(8000) = (select top 1 String from @CreatePracticeCommands)
-			set @sql = (select top 1 String from @CreatePracticeCommands)
-			;with t as (select top 1 * from @CreatePracticeCommands) delete from t
+		-- DL - actually execute the SQL to create the practice databases 
+		declare @StringListCopy StringList
+		insert into @StringListCopy (String) select String from @CreatePracticeCommands
 
-			execute sp_executesql @sql
-			exec PrintMsg 'Created new practice DB:'
-			exec PrintMsg @sql
+		while exists (select * from @StringListCopy)
+		begin
+			declare @String varchar(8000) = (select top 1 String from @StringListCopy)
+			;with t as (select top 1 * from @StringListCopy) delete from t
+
+			EXEC (@String);
 		end
 
-
-		/*declare @CreatePracticeCommands StringList
-		insert into @CreatePracticeCommands (String) 
-			select 'exec ConfigurePractice ' + CDB + ', ''' + OrganisationName + ''', ''' + ODSCode + ''', ''' + OrganisationGuid + ''''
-			from dbo.GetStagingOrganisations() where IsInstalled = 0 and HaveDetails = 1
-
-		set @msg = 'Data found for new organisations ' + @PracticeNames
+		/*set @msg = 'Data found for new organisations ' + @PracticeNames
 		exec PrintMsg @msg
 		exec PrintMsg ''
 		exec PrintMsg 'Please run:'
@@ -353,5 +350,4 @@ as
 	end catch
 
 GO
-
 

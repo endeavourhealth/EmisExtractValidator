@@ -1,7 +1,7 @@
 USE [EMISXMaster]
 GO
 
-/****** Object:  StoredProcedure [dbo].[InstallExtract]    Script Date: 01/09/2017 11:20:16 ******/
+/****** Object:  StoredProcedure [dbo].[InstallExtract]    Script Date: 01/09/2017 12:13:35 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -55,11 +55,12 @@ as
 			exec ThrowError 'Cannot install - first installed extract must be a bulk'
 			return
 		end
-		else if (@StagedProcessingIdStart != (@InstalledProcessingIdEnd + 1))
+		--DL - sequence numbers get reset, so this isn't valid
+		/*else if (@StagedProcessingIdStart != (@InstalledProcessingIdEnd + 1))
 		begin
 			exec ThrowError 'Cannot install - processing ID does not continue from last installed extract'
 			return
-		end
+		end*/
 	end
 
 	declare @StagedExtractDate datetime2 = (select ExtractDate from Data.StagedExtract)
@@ -105,7 +106,7 @@ as
 	begin
 		declare @CreatePracticeCommands StringList
 		insert into @CreatePracticeCommands (String) 
-			select 'exec ConfigurePractice ' + CDB + ', ''' + OrganisationName + ''', ''' + ODSCode + ''', ''' + OrganisationGuid + ''';'
+			select 'exec ConfigurePractice ' + CDB + ', ''' + replace(OrganisationName, '''', '''''') + ''', ''' + ODSCode + ''', ''' + OrganisationGuid + ''''
 			from dbo.GetStagingOrganisations() where IsInstalled = 0 and HaveDetails = 1
 
 		-- DL - actually execute the SQL to create the practice databases 
@@ -119,7 +120,7 @@ as
 
 			EXEC (@String);
 		end
-
+		
 		/*set @msg = 'Data found for new organisations ' + @PracticeNames
 		exec PrintMsg @msg
 		exec PrintMsg ''

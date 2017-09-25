@@ -47,7 +47,8 @@ begin
 	left outer join Data.ConfiguredPractices p on so.OrganisationGuid = p.OrganisationGuid
 	left outer join EMISXStaging.dbo.vw_Admin_Organisation o on so.OrganisationGuid = o.OrganisationGuid
 	left outer join EMISXCommon.dbo.vw_Admin_Organisation co on so.OrganisationGuid = co.OrganisationGuid
-	where so.IsActivated = 'true'
+	--DL - practices seem to become deactivated, so don't constrain on this field
+	--where so.IsActivated = 'true'
 
 	return
 end

@@ -722,4 +722,5 @@ values
 (68, 'Prescribing_IssueRecord', 'OrganisationGuid', 'Admin_Organisation', 'OrganisationGuid'),
 (69, 'Prescribing_IssueRecord', 'PatientGuid', 'Admin_Patient', 'PatientGuid'),
 (70, 'Prescribing_IssueRecord', 'ProblemObservationGuid', 'CareRecord_Problem', 'ObservationGuid'),
-(71, 'Coding_ClinicalCode', 'ParentCodeId', 'Coding_ClinicalCode', 'CodeId')
+(71, 'Coding_ClinicalCode', 'ParentCodeId', 'Coding_ClinicalCode', 'CodeId'),
+(72, 'Admin_Patient', 'ExternalUsualGPGuid', 'Admin_UserInRole', 'UserInRoleGuid')

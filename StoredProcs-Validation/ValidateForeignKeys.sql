@@ -7,7 +7,7 @@ if (object_id('ValidateForeignKeys') is not null)
 
 go
 
-create procedure ValidateForeignKeys
+create procedure [dbo].[ValidateForeignKeys]
 (
 	@PracticeDBName varchar(100),
 	@ExtractId integer = null,
@@ -163,12 +163,21 @@ as
 				where FromTable = @FromTable
 				and FromColumn = @FromColumn
  
+				--DL 2017/11/27 - this logic is wrong, as the functions factor in whether resources have been deleted, which is wrong
 				set @sql  =
+					  'select f.<<FROM_COLUMN>> 
+					  from <<FROM_DB>>.dbo.<<FROM_TABLE>> f 
+					  left outer join <<TO_DB>>.dbo.<<TO_TABLE>> t 
+					  on f.<<FROM_COLUMN>> = t.<<TO_COLUMN>> 
+					  and f.ExtractId >= t.ExtractId
+					  where isnull(f.<<FROM_COLUMN>>, '''') != ''''
+					  and t.<<TO_COLUMN>> is null'
+				/*set @sql  =
 					  'select f.<<FROM_COLUMN>> 
 					  from <<FROM_DB>>.dbo.fn_<<FROM_TABLE>>(<<EXTRACT_ID>>) f 
 					  left outer join <<TO_DB>>.dbo.fn_<<TO_TABLE>>(<<EXTRACT_ID>>) t on f.<<FROM_COLUMN>> = t.<<TO_COLUMN>> 
 					  where isnull(f.<<FROM_COLUMN>>, '''') != ''''
-					  and t.<<TO_COLUMN>> is null'
+					  and t.<<TO_COLUMN>> is null'*/
   
 				set @sql = replace(@sql, '<<FROM_DB>>', @FromDB)
 				set @sql = replace(@sql, '<<FROM_TABLE>>', @FromTable)
@@ -177,6 +186,8 @@ as
 				set @sql = replace(@sql, '<<TO_TABLE>>', @ToTable)
 				set @sql = replace(@sql, '<<TO_COLUMN>>', @ToColumn)
 				set @sql = replace(@sql, '<<EXTRACT_ID>>', @ExtractId)
+
+				--print @sql;
 
 				declare @errors StringList
 				insert into @errors (String)
@@ -241,4 +252,7 @@ as
 		  end
 	end
 
-go
+
+
+GO
+
